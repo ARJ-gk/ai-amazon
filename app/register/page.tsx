@@ -2,21 +2,22 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 
-const loginSchema = z.object({
+const registerSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
   })
@@ -28,20 +29,23 @@ export default function LoginPage() {
     setErrors({})
 
     try {
-      const validatedData = loginSchema.parse(formData)
-      const result = await signIn("credentials", {
-        email: validatedData.email,
-        password: validatedData.password,
-        redirect: false,
+      const validatedData = registerSchema.parse(formData)
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(validatedData),
       })
 
-      if (result?.error) {
-        throw new Error(result.error)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Something went wrong")
       }
 
-      toast.success("Login successful!")
-      router.push("/")
-      router.refresh()
+      toast.success("Registration successful! Please log in.")
+      router.push("/login")
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {}
@@ -65,17 +69,36 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md space-y-8 rounded-lg border p-6 shadow-lg">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Sign in to your account</h1>
+          <h1 className="text-2xl font-bold">Create an account</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Don't have an account?{" "}
-            <a href="/register" className="text-blue-600 hover:underline">
-              Sign up
+            Already have an account?{" "}
+            <a href="/login" className="text-blue-600 hover:underline">
+              Sign in
             </a>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium">
+                Name
+              </label>
+              <Input
+                id="name"
+                type="text"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                className="mt-1"
+                disabled={isLoading}
+              />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+              )}
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium">
                 Email
@@ -116,7 +139,7 @@ export default function LoginPage() {
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? "Creating account..." : "Create account"}
           </Button>
         </form>
       </div>
