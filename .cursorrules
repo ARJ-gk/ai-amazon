@@ -23,7 +23,7 @@
 [X] Set up Shadcn UI components
 [X] Configure Prisma with PostgreSQL
 [X] Set up environment variables
-[ ] Initialize Git repository
+[X] Initialize Git repository
 
 ### Phase 2: Authentication and User Management
 [ ] Implement next-auth@beta setup
@@ -138,4 +138,4 @@
 - Styling: Tailwind CSS
 
 ## Current Focus
-[ ] Initialize Git repository
+[ ] Implement next-auth@beta setup
