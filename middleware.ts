@@ -1,45 +1,58 @@
 import { NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
-import type { NextRequest } from "next/server"
+import { withAuth } from "next-auth/middleware"
 
-export async function middleware(req: NextRequest) {
-  const token = await getToken({ req })
-  const isAuth = !!token
-  const isAuthPage =
-    req.nextUrl.pathname.startsWith("/login") ||
-    req.nextUrl.pathname.startsWith("/register")
+export default withAuth(
+  async function middleware(req) {
+    const token = await getToken({ req })
+    const isAuth = !!token
+    const isAuthPage =
+      req.nextUrl.pathname.startsWith("/login") ||
+      req.nextUrl.pathname.startsWith("/register") ||
+      req.nextUrl.pathname.startsWith("/forgot-password") ||
+      req.nextUrl.pathname.startsWith("/reset-password")
 
-  if (isAuthPage) {
-    if (isAuth) {
-      return NextResponse.redirect(new URL("/", req.url))
-    }
-    return NextResponse.next()
-  }
-
-  if (!isAuth) {
-    let from = req.nextUrl.pathname
-    if (req.nextUrl.search) {
-      from += req.nextUrl.search
+    if (isAuthPage) {
+      if (isAuth) {
+        return NextResponse.redirect(new URL("/", req.url))
+      }
+      return null
     }
 
-    return NextResponse.redirect(
-      new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
-    )
-  }
+    if (!isAuth) {
+      let from = req.nextUrl.pathname
+      if (req.nextUrl.search) {
+        from += req.nextUrl.search
+      }
 
-  return NextResponse.next()
-}
+      return NextResponse.redirect(
+        new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
+      )
+    }
+
+    // Check for admin routes
+    if (req.nextUrl.pathname.startsWith("/admin")) {
+      if (token.role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/", req.url))
+      }
+    }
+
+    return null
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  }
+)
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
+    "/admin/:path*",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/profile/:path*",
   ],
 } 

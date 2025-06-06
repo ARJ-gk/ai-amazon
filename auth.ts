@@ -1,83 +1,63 @@
 import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
-import bcrypt from "bcryptjs"
+import { authConfig } from "./auth.config"
 import Credentials from "next-auth/providers/credentials"
+import { z } from "zod"
+import bcrypt from "bcryptjs"
+import { prisma } from "@/lib/prisma"
 
-const prisma = new PrismaClient()
-
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-  },
+export const { auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials")
+        const parsedCredentials = z
+          .object({ email: z.string().email(), password: z.string().min(6) })
+          .safeParse(credentials)
+
+        if (!parsedCredentials.success) {
+          return null
         }
 
+        const { email, password } = parsedCredentials.data
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email as string
-          }
+          where: { email },
         })
 
-        if (!user || !user?.hashedPassword) {
-          throw new Error("Invalid credentials")
+        if (!user || !user.hashedPassword) {
+          return null
         }
 
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password as string,
+        const passwordsMatch = await bcrypt.compare(
+          password,
           user.hashedPassword
         )
 
-        if (!isCorrectPassword) {
-          throw new Error("Invalid credentials")
+        if (!passwordsMatch) {
+          return null
         }
 
-        return user
-      }
-    })
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        }
+      },
+    }),
   ],
   callbacks: {
-    async session({ token, session }) {
-      if (token) {
-        session.user.id = token.id as string
-        session.user.name = token.name as string
-        session.user.email = token.email as string
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
         session.user.role = token.role as string
       }
-
       return session
     },
-    async jwt({ token, user }) {
-      const dbUser = await prisma.user.findFirst({
-        where: {
-          email: token.email as string,
-        },
-      })
-
-      if (!dbUser) {
-        if (user) {
-          token.id = user?.id
-        }
-        return token
-      }
-
-      return {
-        id: dbUser.id,
-        name: dbUser.name,
-        email: dbUser.email,
-        role: dbUser.role,
-      }
-    }
-  }
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 }) 

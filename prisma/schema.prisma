@@ -14,7 +14,7 @@ model User {
   emailVerified  DateTime?
   image          String?
   hashedPassword String?
-  role           String    @default("user")
+  role           Role      @default(CUSTOMER)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -55,4 +55,9 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
 } 
