@@ -18,4 +18,6 @@ export const authConfig = {
     },
   },
   providers: [], // configured in auth.ts
-} satisfies NextAuthConfig 
+} satisfies NextAuthConfig
+
+export default authConfig 

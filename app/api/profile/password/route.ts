@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
-import { authOptions } from "@/lib/auth"
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -16,7 +15,7 @@ const passwordSchema = z.object({
 
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
 
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -34,7 +33,7 @@ export async function PATCH(req: Request) {
       select: { hashedPassword: true },
     })
 
-    if (!user) {
+    if (!user || !user.hashedPassword) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }

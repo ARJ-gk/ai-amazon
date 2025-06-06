@@ -1,12 +1,13 @@
-import NextAuth from "next-auth"
-import { authConfig } from "./auth.config"
 import Credentials from "next-auth/providers/credentials"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { authConfig as baseConfig } from "./auth.config.js"
+import type { JWT } from "next-auth/jwt"
+import type { Session, User } from "next-auth"
 
-export const { auth, signIn, signOut } = NextAuth({
-  ...authConfig,
+export const authConfig = {
+  ...baseConfig,
   providers: [
     Credentials({
       async authorize(credentials) {
@@ -46,13 +47,13 @@ export const { auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
         token.role = user.role
       }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.role = token.role as string
       }
@@ -60,4 +61,4 @@ export const { auth, signIn, signOut } = NextAuth({
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-}) 
+} 
