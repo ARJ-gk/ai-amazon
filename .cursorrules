@@ -1,0 +1,141 @@
+# Cursor Rules
+
+## Instructions
+
+- Record fixes for mistakes or corrections to avoid repetition in the `Lessons` section.
+- Organize thoughts and plan steps before starting a task in the `Scratchpad` section.
+- Clear old tasks if necessary.
+- Use todo markers for progress tracking:
+  - `[X]` Completed tasks
+  - `[ ]` Pending tasks
+- Update Scratchpad after completing subtasks.
+- Reflect and plan after milestones for better task management.
+- Always refer to Scratchpad before planning the next step.
+
+## Lessons
+
+## ScratchPad
+
+### Phase 1: Project Setup and Configuration
+[X] Initialize Next.js 15 project with TypeScript
+[X] Set up project structure and folder organization
+[X] Configure ESLint and Prettier
+[X] Set up Shadcn UI components
+[X] Configure Prisma with PostgreSQL
+[X] Set up environment variables
+[ ] Initialize Git repository
+
+### Phase 2: Authentication and User Management
+[ ] Implement next-auth@beta setup
+[ ] Create user authentication flows (signup, login, forgot password)
+[ ] Set up email verification using Resend
+[ ] Implement role-based access control (admin, customer)
+[ ] Create user profile management
+
+### Phase 3: Database Schema and Models
+[ ] Design and implement database schema for:
+  - Users
+  - Products
+  - Categories
+  - Orders
+  - Cart
+  - Reviews
+  - Addresses
+  - Payments
+[ ] Set up Prisma migrations
+[ ] Create seed data for testing
+
+### Phase 4: Core Ecommerce Features
+[ ] Product Management
+  - Product listing
+  - Product details
+  - Search functionality
+  - Filtering and sorting
+  - Product categories
+[ ] Shopping Cart
+  - Add/remove items
+  - Update quantities
+  - Save for later
+[ ] Checkout Process
+  - Address management
+  - Payment integration with Stripe
+  - Order confirmation
+[ ] Order Management
+  - Order history
+  - Order tracking
+  - Order status updates
+
+### Phase 5: Admin Dashboard
+[ ] Admin Layout and Navigation
+[ ] Dashboard Overview
+  - Sales analytics using Recharts
+  - Recent orders
+  - Inventory status
+[ ] Product Management
+  - CRUD operations
+  - Bulk actions
+  - Image upload using Uploadthing
+[ ] Order Management
+  - Order processing
+  - Status updates
+  - Customer communication
+[ ] User Management
+  - User list
+  - Role management
+  - Account status
+
+### Phase 6: Advanced Features
+[ ] Search and Filtering
+  - Advanced search
+  - Filters
+  - Sort options
+[ ] Reviews and Ratings
+  - Product reviews
+  - Rating system
+  - Review moderation
+[ ] Wishlist
+  - Add/remove items
+  - Share functionality
+[ ] Notifications
+  - Order updates
+  - Price alerts
+  - Stock notifications
+
+### Phase 7: Performance and Optimization
+[ ] Implement caching strategies
+[ ] Optimize images and assets
+[ ] Add loading states and skeletons
+[ ] Implement error boundaries
+[ ] Add SEO optimization
+[ ] Performance monitoring
+
+### Phase 8: Testing and Deployment
+[ ] Unit testing
+[ ] Integration testing
+[ ] E2E testing
+[ ] Security testing
+[ ] Performance testing
+[ ] Deployment setup
+[ ] CI/CD pipeline
+
+### Phase 9: Documentation and Maintenance
+[ ] API documentation
+[ ] User documentation
+[ ] Admin documentation
+[ ] Maintenance procedures
+[ ] Backup strategies
+
+## Tech Stack Details
+- Frontend: Next.js 15, TypeScript, Shadcn UI, Lucide Icons
+- State Management: Zustand
+- Form Validation: Zod
+- Database: PostgreSQL with Prisma
+- Authentication: next-auth@beta
+- Payment: Stripe
+- File Upload: Uploadthing
+- Email: Resend
+- Charts: Recharts
+- Styling: Tailwind CSS
+
+## Current Focus
+[ ] Initialize Git repository
