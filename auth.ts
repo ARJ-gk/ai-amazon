@@ -35,7 +35,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
+          credentials.password as string,
           user.hashedPassword
         )
 
@@ -50,10 +50,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async session({ token, session }) {
       if (token) {
-        session.user.id = token.id
-        session.user.name = token.name
-        session.user.email = token.email
-        session.user.role = token.role
+        session.user.id = token.id as string
+        session.user.name = token.name as string
+        session.user.email = token.email as string
+        session.user.role = token.role as string
       }
 
       return session
@@ -61,7 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       const dbUser = await prisma.user.findFirst({
         where: {
-          email: token.email,
+          email: token.email as string,
         },
       })
 
