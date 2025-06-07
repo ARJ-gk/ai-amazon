@@ -1,68 +1,81 @@
-import { NextAuthConfig } from "next-auth"
-import Credentials from "next-auth/providers/credentials"
+import CredentialsProvider from "next-auth/providers/credentials"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import type { NextAuthOptions } from "next-auth"
+import type { JWT } from "next-auth/jwt"
+import type { Session } from "next-auth"
 
-export const authConfig = {
-  pages: {
-    signIn: "/login",
-  },
-  callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user
-      const isOnDashboard = nextUrl.pathname.startsWith("/admin")
-      if (isOnDashboard) {
-        if (isLoggedIn) return true
-        return false
-      } else if (isLoggedIn) {
-        return Response.redirect(new URL("/", nextUrl))
-      }
-      return true
-    },
-    jwt({ token, user }) {
-      if (user) {
-        token.role = user.role
-      }
-      return token
-    },
-    session({ session, token }) {
-      if (token) {
-        session.user.role = token.role
-      }
-      return session
-    },
-  },
+export type UserRole = "ADMIN" | "CUSTOMER"
+
+export const authOptions: NextAuthOptions = {
   providers: [
-    Credentials({
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
       async authorize(credentials) {
         const parsedCredentials = z
           .object({ email: z.string().email(), password: z.string().min(6) })
           .safeParse(credentials)
 
-        if (!parsedCredentials.success) return null
+        if (!parsedCredentials.success) {
+          return null
+        }
 
         const { email, password } = parsedCredentials.data
         const user = await prisma.user.findUnique({
           where: { email },
         })
 
-        if (!user?.hashedPassword) return null
+        if (!user || !user.hashedPassword) {
+          return null
+        }
 
         const passwordsMatch = await bcrypt.compare(
           password,
           user.hashedPassword
         )
 
-        if (!passwordsMatch) return null
+        if (!passwordsMatch) {
+          return null
+        }
 
         return {
           id: user.id,
-          email: user.email,
           name: user.name,
-          role: user.role,
+          email: user.email,
+          role: user.role as UserRole,
         }
       },
     }),
   ],
-} satisfies NextAuthConfig 
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as any).role
+        token.id = (user as any).id
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).role = (token as any).role
+        (session.user as any).id = (token as any).id
+      }
+      return session
+    },
+  },
+  pages: {
+    signIn: "/login",
+    error: "/auth/error",
+    verifyRequest: "/auth/verify-request",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+} 

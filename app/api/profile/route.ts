@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/auth"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
@@ -8,58 +9,48 @@ const profileSchema = z.object({
   email: z.string().email("Invalid email address"),
 })
 
-export async function PATCH(req: Request) {
-  try {
-    const session = await auth()
-
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    const body = await req.json()
-    const { name, email } = profileSchema.parse(body)
-
-    // Check if email is already taken by another user
-    if (email !== session.user.email) {
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      })
-
-      if (existingUser) {
-        return NextResponse.json(
-          { error: "Email already taken" },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Update user
-    const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
-      data: { name, email },
-    })
-
-    return NextResponse.json({
-      user: {
-        id: updatedUser.id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-      },
-    })
-  } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    )
+export async function GET() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  })
+
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  }
+
+  return NextResponse.json(user)
+}
+
+export async function PATCH(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const body = await req.json()
+  const { name, email } = profileSchema.parse(body)
+
+  const user = await prisma.user.update({
+    where: { id: session.user.id },
+    data: { name, email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  })
+
+  return NextResponse.json(user)
 } 
